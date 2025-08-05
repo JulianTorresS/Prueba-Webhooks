@@ -1,36 +1,39 @@
-// Importar Express.js const express = require ( 'express' );
+// Importar Express.js
+const express = require('express');
 
+// Crear la aplicación Express
+const app = express();
 
-// Crea una aplicación Express const app = express ();
+// Middleware para analizar cuerpos JSON
+app.use(express.json());
 
+// Establecer el puerto y verificar el token
+const port = process.env.PORT || 3000;
+const verifyToken = process.env.VERIFY_TOKEN;
 
-// Middleware para analizar cuerpos JSON 
-app.use ( express.json ( ) ) ;
+// Ruta para verificar el webhook (GET)
+app.get('/', (req, res) => {
+  const mode = req.query['hub.mode'];
+  const challenge = req.query['hub.challenge'];
+  const token = req.query['hub.verify_token'];
 
-// Establecer el puerto y verificar_token const port = process.env.PORT || 3000 ; const verifyToken = process.env.VERIFY_TOKEN ;​​​
- 
+  if (mode === 'subscribe' && token === verifyToken) {
+    console.log('WEBHOOK VERIFICADO');
+    res.status(200).send(challenge);
+  } else {
+    res.sendStatus(403);
+  }
+});
 
+// Ruta para recibir eventos del webhook (POST)
+app.post('/', (req, res) => {
+  const timestamp = new Date().toISOString().replace('T', ' ').slice(0, 19);
+  console.log(`\n\nWebhook recibido ${timestamp}\n`);
+  console.log(JSON.stringify(req.body, null, 2));
+  res.sendStatus(200);
+});
 
-// Ruta para solicitudes GET app.get 
-( ' /' , ( req , res ) = > { const { ' hub.mode' : mode , ' hub.challenge ' : challenge , 'hub.verify_token' : token } = req.query ;   
-       
-
-  si ( modo === 'suscribirse' && token === verifyToken ) { 
-    console.log ( 'WEBHOOK VERIFICADO' ) ; res.status (200) .send ( desafío ) 
-    ; } de lo contrario { res.status ( 
-    403 ) .end ( ) ; } } ) ;    
-    
-  
-
-
-// Ruta para solicitudes POST app.post 
-( ' /' , ( req , res ) => { const timestamp = new Date ( ). toISOString (). replace ( ' T' , ' ' ) .slice ( 0,19 ); console.log 
-  ( ` \ n \n Webhook recibido $ { timestamp } \n` ); console.log 
-  ( JSON.stringify ( req.body , null , 2 ) ) ; res.status 
-  ( 200 ) .end ( ) ; } ) ;   
-        
-
-
-// Inicia la 
-aplicación del servidor . listen ( puerto , () => { 
-  console . log (` \n Escuchando en el puerto $ { puerto } \n `); });   
+// Iniciar el servidor
+app.listen(port, () => {
+  console.log(`\nEscuchando en el puerto ${port}\n`);
+});
